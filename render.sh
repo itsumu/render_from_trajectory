@@ -1,0 +1,1 @@
+blender -b wall.blend -P render.py

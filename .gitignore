@@ -1,0 +1,12 @@
+# Project
+.vscode/
+.idea/
+
+# Data
+data/
+*.obj
+*.jpg
+*.png
+
+# Output
+output/

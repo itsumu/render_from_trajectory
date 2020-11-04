@@ -1,0 +1,9 @@
+scene = 'carve'
+x_min = -95
+x_max = 95
+y_min = -92
+y_max = 92
+const_depth = 90
+view_count_x = 5
+view_count_y = 3
+view_count_z = 10

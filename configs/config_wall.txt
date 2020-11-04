@@ -1,0 +1,9 @@
+scene = 'wall'
+x_min = -22
+x_max = 22
+y_min = -6
+y_max = 6
+const_depth = 6
+view_count_x = 5
+view_count_y = 3
+view_count_z = 10
