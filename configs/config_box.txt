@@ -1,0 +1,11 @@
+scene = box
+x_min = -2
+x_max = 2
+y_min = -1
+y_max = 1
+const_depth = 1
+view_count_x = 5
+view_count_y = 3
+view_count_z = 10
+sparse_view_count_x = 9
+dense_view_count_x = 81

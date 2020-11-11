@@ -1,1 +1,1 @@
-blender -b wall.blend -P render.py
+blender -b carve.blend -P render.py -- --config=configs/config_carve.txt --mode='sparse'
