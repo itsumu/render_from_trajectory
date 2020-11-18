@@ -8,21 +8,26 @@ import bpy
 from mathutils import Matrix, Vector, Quaternion
 
 ROOT_DIR = bpy.path.abspath('//')
+DATA_BASE = os.path.join(ROOT_DIR, 'data')
 OUTPUT_BASE = os.path.join(ROOT_DIR, 'output')
 
 def parse_args(argv):
     parser = configargparse.ArgumentParser()
 
     parser.add_argument('--config', is_config_file=True, help='Config file path')
-    parser.add_argument('--scene', type=str, default='wall', help='Scene name')
+    parser.add_argument('--scene', type=str, default='default', help='Scene name')
+    parser.add_argument('--output_dir', type=str, default='default', help='Output name (Same as scene most time)')
     parser.add_argument('--x_min', type=float, default=-22, help='x min')
     parser.add_argument('--x_max', type=float, default=22, help='x max')
     parser.add_argument('--y_min', type=float, default=-6, help='y min')
     parser.add_argument('--y_max', type=float, default=6, help='y max')
+    parser.add_argument('--z_min', type=float, default=0, help='z min')
+    parser.add_argument('--z_max', type=float, default=0, help='z max')
     parser.add_argument('--const_depth', type=float, default=-1, help='Manual depth')
     parser.add_argument('--view_count_x', type=int, default=5, help='View count along x axis')
     parser.add_argument('--view_count_y', type=int, default=3, help='View count along y axis')
     parser.add_argument('--view_count_z', type=int, default=10, help='View count along z axis')
+    parser.add_argument('--view_count_all', type=int, default=0, help='Overall view count')
     parser.add_argument('--sparse_view_count_x', type=int, default=9, help='Sparse view count along x axis')
     parser.add_argument('--dense_view_count_x', type=int, default=9, help='Dense view count along x axis')
     parser.add_argument('--mode', type=str, default='sparse', help='Sampling mode')
@@ -48,11 +53,11 @@ def render_forward_grid(start_position, x_interval, y_interval, view_count_x, vi
             current_position = start_position + np.array([x_interval, 0, 0]) * i + np.array([0,
              y_interval, 0]) * j
             camera.matrix_world = Matrix.Translation(current_position)
-            output_filename = 'image_' + str(frame_index) + '.jpg'
+            output_filename = 'image_{:03d}.jpg'.format(frame_index)
             scene.render.filepath = os.path.join(output_dir, output_filename)
             scene.frame_set(frame_index)
             bpy.ops.render.render(write_still=True)
-            np.savetxt(os.path.join(output_dir, 'extrinsics_' + str(frame_index) + '.txt'), camera.matrix_world)
+            np.savetxt(os.path.join(output_dir, 'extrinsics_{:03d}.txt'.format(frame_index)), camera.matrix_world)
 
             frame_index += 1
 
@@ -137,6 +142,36 @@ def generate_dense_data(x_range, x_interval, view_count_x, depth, scene_name):
 
     render_stare_center_x_axis(start_position, x_interval, view_count_x, frame_index, sparse_dir)
 
+def generate_linear_data(start_position, end_position, view_count, scene_name):
+    output_dir = os.path.join(OUTPUT_BASE, 'linear', scene_name)
+    os.makedirs(output_dir, exist_ok=True)
+    frame_index = 0
+    interval = (end_position - start_position) / (view_count - 1)
+
+    for i in range(view_count):
+        current_position = start_position + interval * i
+        camera.matrix_world = Matrix.Translation(current_position)
+        output_filename = 'image_{:03d}.jpg'.format(frame_index)
+        scene.render.filepath = os.path.join(output_dir, output_filename)
+        scene.frame_set(frame_index)
+        bpy.ops.render.render(write_still=True)
+        np.savetxt(os.path.join(output_dir, 'extrinsics_{:03d}.txt'.format(frame_index)), camera.matrix_world)
+
+        frame_index += 1
+
+def generate_manual_data(trajectories_dir, output_dir):
+    for frame_index, file_name in enumerate(sorted(os.listdir(trajectories_dir))):
+        # Load from file
+        file_path = os.path.join(trajectories_dir, file_name)
+        extrinsics = np.loadtxt(file_path)
+
+        # Move camera
+        camera.matrix_world = Matrix(extrinsics)
+        output_filename = 'image_{:03d}.jpg'.format(frame_index)
+        scene.render.filepath = os.path.join(output_dir, output_filename)
+        scene.frame_set(frame_index)
+        bpy.ops.render.render(write_still=True)
+        np.savetxt(os.path.join(output_dir, 'extrinsics_{:03d}.txt'.format(frame_index)), camera.matrix_world)
 
 if __name__ == '__main__':
     # Parse arguments
@@ -176,13 +211,14 @@ if __name__ == '__main__':
     else:
         depth = args.const_depth
 
-    z_range = (depth - depth / 2, depth + depth / 2)
+    z_range = (args.z_min, args.z_max)
     view_count_z = args.view_count_z
     if view_count_z != 1:
         z_interval = (z_range[1] - z_range[0]) / (view_count_z - 1)
     else:
         z_interval = 0
 
+    if args.output_dir == 'default': args.output_dir = args.scene
     if args.mode == 'train':
         generate_training_data(x_range, y_range, x_interval, y_interval, view_count_x, view_count_y,
          depth, args.scene)
@@ -192,6 +228,9 @@ if __name__ == '__main__':
     elif args.mode == 'zoom':
         frame_index = 0
         zoom_dir = os.path.join(OUTPUT_BASE, 'zoom', args.scene)
+
+        z_range = (depth - depth / 2, depth + depth / 2)
+        z_interval = (z_range[1] - z_range[0]) / (view_count_z - 1)
         start_position = np.array([0, 0, z_range[0]])
         render_zoom_in(start_position, z_interval, view_count_z, frame_index, zoom_dir)
     elif args.mode == 'sparse':
@@ -204,3 +243,14 @@ if __name__ == '__main__':
         view_count_x = args.dense_view_count_x
         x_interval = (x_range[1] - x_range[0]) / (view_count_x - 1)
         generate_dense_data(x_range, x_interval, view_count_x, depth, args.scene)
+    elif args.mode == 'linear':
+        start_position = np.array([x_range[0], y_range[0], z_range[0]])
+        end_position = np.array([x_range[1], y_range[1], z_range[1]])
+        generate_linear_data(start_position, end_position, args.view_count_all, args.scene)
+    elif args.mode == 'forward':
+        start_position = np.array([x_range[0], y_range[0], args.const_depth])
+        render_forward_grid(start_position, x_interval, y_interval, view_count_x, view_count_y, output_dir=os.path.join(OUTPUT_BASE, 'forward', args.output_dir))
+    elif args.mode == 'manual':
+        generate_manual_data(os.path.join(DATA_BASE, 'trajectories', args.scene), os.path.join(OUTPUT_BASE, 'manual', args.output_dir))
+    else:
+        print('Render model not specified!')

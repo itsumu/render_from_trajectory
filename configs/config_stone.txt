@@ -1,0 +1,9 @@
+scene = stone
+view_count_x = 3
+view_count_y = 3
+x_min = -3
+x_max = 3
+y_min = -3
+y_max = 3
+const_depth = 3
+dense_view_count_x = 81

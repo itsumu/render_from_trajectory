@@ -15,3 +15,6 @@ output/
 # Blend file
 *.blend
 *.blend1
+
+# Temporaries
+scan_single.py
