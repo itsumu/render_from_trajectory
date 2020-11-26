@@ -30,7 +30,7 @@ def parse_args(argv):
     parser.add_argument('--view_count_all', type=int, default=0, help='Overall view count')
     parser.add_argument('--sparse_view_count_x', type=int, default=9, help='Sparse view count along x axis')
     parser.add_argument('--dense_view_count_x', type=int, default=9, help='Dense view count along x axis')
-    parser.add_argument('--mode', type=str, default='sparse', help='Sampling mode')
+    parser.add_argument('--mode', type=str, default='sparse', help='Sampling mode', required=True)
     return parser.parse_args(argv)
 
 # Assume camera up is same as world up (positive y)
@@ -253,4 +253,4 @@ if __name__ == '__main__':
     elif args.mode == 'manual':
         generate_manual_data(os.path.join(DATA_BASE, 'trajectories', args.scene), os.path.join(OUTPUT_BASE, 'manual', args.output_dir))
     else:
-        print('Render model not specified!')
+        print('Render mode not specified!')

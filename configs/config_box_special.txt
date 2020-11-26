@@ -10,5 +10,5 @@ view_count_y = 5
 view_count_z = 1
 view_count_all = 5
 sparse_view_count_x = 9
-dense_view_count_x = 16
+dense_view_count_x = 60
 mode = linear
