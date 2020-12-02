@@ -30,18 +30,47 @@ def parse_args(argv):
     parser.add_argument('--view_count_all', type=int, default=0, help='Overall view count')
     parser.add_argument('--sparse_view_count_x', type=int, default=9, help='Sparse view count along x axis')
     parser.add_argument('--dense_view_count_x', type=int, default=9, help='Dense view count along x axis')
+    parser.add_argument('--spiral_view_count', type=int, default=9, help='Spiral view count')
     parser.add_argument('--mode', type=str, default='sparse', help='Sampling mode', required=True)
     return parser.parse_args(argv)
 
 # Assume camera up is same as world up (positive y)
 def look_at(camera, target_position):
-    forward = camera.matrix_world.to_3x3() @ Vector((0, 0, -1))
-    direction = target_position - camera.matrix_world.to_translation()
-    axis = forward.cross(direction)
-    angle = forward.angle(direction)
-    rotation_quat = Quaternion(axis, angle)
-    rotation_mat = rotation_quat.to_matrix().to_4x4()
+    world_up = Vector((0, 1, 0))
+    forward = target_position - camera.matrix_world.to_translation()
+    right = forward.cross(world_up)
+    up = right.cross(forward)
+    forward.normalize()
+    right.normalize()
+    up.normalize()
+    rotation_mat = Matrix((right, up, -forward)).transposed().to_4x4()
+    print(rotation_mat)
     camera.matrix_world = camera.matrix_world @ rotation_mat
+
+def render_spiral(radii, center_position, stare_center, view_count, frame_start_index=0, output_dir=os.path.join(OUTPUT_BASE, 'spiral')):
+    os.makedirs(output_dir, exist_ok=True)
+    frame_index = frame_start_index
+
+    increment = 0
+    if view_count != 1:
+        increment = 1 / (view_count - 1)
+    # Render
+    for i in range(view_count):
+        x_coords = -np.cos(2 * np.pi * increment * i) * radii[0] + center_position[0]
+        y_coords = np.sin(2 * np.pi * increment * i) * radii[1] + center_position[1]
+        z_coords = np.sin(2 * np.pi * increment * i) * radii[2] + center_position[2]
+        current_position = np.array([x_coords, y_coords, z_coords])
+        camera.matrix_world = Matrix.Translation(current_position)
+        look_at(camera, Vector(stare_center))
+        output_filename = 'image_{:03d}.jpg'.format(frame_index)
+        scene.render.filepath = os.path.join(output_dir, output_filename)
+        scene.frame_set(frame_index)
+        bpy.ops.render.render(write_still=True)
+        np.savetxt(os.path.join(output_dir, 'extrinsics_{:03d}.txt'.format(frame_index)), camera.matrix_world)
+
+        frame_index += 1
+
+    return frame_index
 
 def render_forward_grid(start_position, x_interval, y_interval, view_count_x, view_count_y, frame_start_index=0, output_dir=os.path.join(OUTPUT_BASE, 'forward_grid')):
     os.makedirs(output_dir, exist_ok=True)
@@ -250,6 +279,15 @@ if __name__ == '__main__':
     elif args.mode == 'forward':
         start_position = np.array([x_range[0], y_range[0], args.const_depth])
         render_forward_grid(start_position, x_interval, y_interval, view_count_x, view_count_y, output_dir=os.path.join(OUTPUT_BASE, 'forward', args.output_dir))
+    elif args.mode == 'spiral':
+        start_position = np.array([x_range[0], y_range[0], z_range[0]])
+        x_radius = (x_range[1] - x_range[0]) / 2
+        y_radius = (y_range[1] - y_range[0]) / 2
+        z_radius = (z_range[1] - z_range[0]) / 2
+        radii = np.array([x_radius, y_radius, z_radius])
+        center_position = np.array([(x_range[0] + x_range[1]) / 2, (y_range[0] + y_range[1]) / 2, (z_range[0] + z_range[1]) / 2])
+        stare_center = np.array([0, 0, 0])
+        render_spiral(radii, center_position, stare_center, args.spiral_view_count, output_dir=os.path.join(OUTPUT_BASE, 'spiral', args.output_dir))
     elif args.mode == 'manual':
         generate_manual_data(os.path.join(DATA_BASE, 'trajectories', args.scene), os.path.join(OUTPUT_BASE, 'manual', args.output_dir))
     else:
