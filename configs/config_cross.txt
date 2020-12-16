@@ -1,0 +1,11 @@
+scene = cross
+resolution_x = 3200
+resolution_y = 2400
+x_min = -67
+x_max = 77
+y_min = -60
+y_max = 53
+z_min = 40
+z_max = 40
+spiral_view_count = 36
+world_up_axis = z

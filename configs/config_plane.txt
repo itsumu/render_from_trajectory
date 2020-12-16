@@ -1,0 +1,11 @@
+scene = plane
+x_min = -1
+x_max = 1
+y_min = 0
+y_max = 0
+const_depth = 1
+view_count_x = 5
+view_count_y = 1
+view_count_z = 1
+sparse_view_count_x = 5
+dense_view_count_x = 60

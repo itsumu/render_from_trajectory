@@ -7,9 +7,11 @@ import numpy as np
 import bpy
 from mathutils import Matrix, Vector, Quaternion
 
+
 ROOT_DIR = bpy.path.abspath('//')
 DATA_BASE = os.path.join(ROOT_DIR, 'data')
 OUTPUT_BASE = os.path.join(ROOT_DIR, 'output')
+
 
 def parse_args(argv):
     parser = configargparse.ArgumentParser()
@@ -17,6 +19,9 @@ def parse_args(argv):
     parser.add_argument('--config', is_config_file=True, help='Config file path')
     parser.add_argument('--scene', type=str, default='default', help='Scene name')
     parser.add_argument('--output_dir', type=str, default='default', help='Output name (Same as scene most time)')
+    parser.add_argument('--world_up_axis', type=str, default='y', help='World up axis')
+    parser.add_argument('--resolution_x', type=int, default=1024, help='Image resolution along x axis')
+    parser.add_argument('--resolution_y', type=int, default=768, help='Image resolution along y axis')
     parser.add_argument('--x_min', type=float, default=-22, help='x min')
     parser.add_argument('--x_max', type=float, default=22, help='x max')
     parser.add_argument('--y_min', type=float, default=-6, help='y min')
@@ -34,9 +39,13 @@ def parse_args(argv):
     parser.add_argument('--mode', type=str, default='sparse', help='Sampling mode', required=True)
     return parser.parse_args(argv)
 
+
 # Assume camera up is same as world up (positive y)
-def look_at(camera, target_position):
-    world_up = Vector((0, 1, 0))
+def look_at(camera, target_position, world_up_axis='y'):
+    if world_up_axis == 'y':
+        world_up = Vector((0, 1, 0))
+    elif world_up_axis == 'z':
+        world_up = Vector((0, 0, 1))
     forward = target_position - camera.matrix_world.to_translation()
     right = forward.cross(world_up)
     up = right.cross(forward)
@@ -47,7 +56,8 @@ def look_at(camera, target_position):
     print(rotation_mat)
     camera.matrix_world = camera.matrix_world @ rotation_mat
 
-def render_spiral(radii, center_position, stare_center, view_count, frame_start_index=0, output_dir=os.path.join(OUTPUT_BASE, 'spiral')):
+
+def render_spiral(radii, world_up_axis, center_position, stare_center, view_count, frame_start_index=0, output_dir=os.path.join(OUTPUT_BASE, 'spiral')):
     os.makedirs(output_dir, exist_ok=True)
     frame_index = frame_start_index
 
@@ -61,16 +71,16 @@ def render_spiral(radii, center_position, stare_center, view_count, frame_start_
         z_coords = np.sin(2 * np.pi * increment * i) * radii[2] + center_position[2]
         current_position = np.array([x_coords, y_coords, z_coords])
         camera.matrix_world = Matrix.Translation(current_position)
-        look_at(camera, Vector(stare_center))
+        look_at(camera, Vector(stare_center), world_up_axis)
         output_filename = 'image_{:03d}.jpg'.format(frame_index)
         scene.render.filepath = os.path.join(output_dir, output_filename)
-        scene.frame_set(frame_index)
         bpy.ops.render.render(write_still=True)
         np.savetxt(os.path.join(output_dir, 'extrinsics_{:03d}.txt'.format(frame_index)), camera.matrix_world)
 
         frame_index += 1
 
     return frame_index
+
 
 def render_forward_grid(start_position, x_interval, y_interval, view_count_x, view_count_y, frame_start_index=0, output_dir=os.path.join(OUTPUT_BASE, 'forward_grid')):
     os.makedirs(output_dir, exist_ok=True)
@@ -92,6 +102,7 @@ def render_forward_grid(start_position, x_interval, y_interval, view_count_x, vi
 
     return frame_index
 
+
 def render_stare_center_x_axis(start_position, x_interval, view_count_x, frame_start_index=0, output_dir=os.path.join(OUTPUT_BASE, 'stare_center_x_axis')):
     os.makedirs(output_dir, exist_ok=True)
     frame_index = frame_start_index
@@ -111,6 +122,7 @@ def render_stare_center_x_axis(start_position, x_interval, view_count_x, frame_s
 
     return frame_index
 
+
 def render_zoom_in(start_position, z_interval, view_count_z, frame_start_index=0, output_dir=os.path.join(OUTPUT_BASE, 'zoom_in')):
     os.makedirs(output_dir, exist_ok=True)
     frame_index = frame_start_index
@@ -128,6 +140,7 @@ def render_zoom_in(start_position, z_interval, view_count_z, frame_start_index=0
 
     return frame_index
 
+
 def generate_training_data(x_range, y_range, x_interval, y_interval, view_count_x, view_count_y,
  depth, scene_name):
     frame_index = 0
@@ -136,6 +149,7 @@ def generate_training_data(x_range, y_range, x_interval, y_interval, view_count_
     # Render a xy-plane grid looking towards -z
     start_position = np.array([x_range[0], y_range[0], depth])
     render_forward_grid(start_position, x_interval, y_interval, view_count_x, view_count_y, frame_index, train_dir)
+
 
 def generate_validation_data(x_range, y_range, x_interval, y_interval, view_count_x, view_count_y,
  depth, scene_name):
@@ -155,6 +169,7 @@ def generate_validation_data(x_range, y_range, x_interval, y_interval, view_coun
     start_position = np.array([x_range[0], 0, depth])
     render_forward_grid(start_position, x_interval, 0, view_count_x, 1, frame_index, val_dir)
 
+
 def generate_sparse_data(x_range, x_interval, view_count_x, depth, scene_name):
     frame_index = 0
     sparse_dir = os.path.join(OUTPUT_BASE, 'sparse', scene_name)
@@ -163,6 +178,7 @@ def generate_sparse_data(x_range, x_interval, view_count_x, depth, scene_name):
 
     render_stare_center_x_axis(start_position, x_interval, view_count_x, frame_index, sparse_dir)
 
+
 def generate_dense_data(x_range, x_interval, view_count_x, depth, scene_name):
     frame_index = 0
     sparse_dir = os.path.join(OUTPUT_BASE, 'dense', scene_name)
@@ -170,6 +186,7 @@ def generate_dense_data(x_range, x_interval, view_count_x, depth, scene_name):
     start_position = np.array([x_range[0], 0, depth])
 
     render_stare_center_x_axis(start_position, x_interval, view_count_x, frame_index, sparse_dir)
+
 
 def generate_linear_data(start_position, end_position, view_count, scene_name):
     output_dir = os.path.join(OUTPUT_BASE, 'linear', scene_name)
@@ -188,6 +205,7 @@ def generate_linear_data(start_position, end_position, view_count, scene_name):
 
         frame_index += 1
 
+
 def generate_manual_data(trajectories_dir, output_dir):
     for frame_index, file_name in enumerate(sorted(os.listdir(trajectories_dir))):
         # Load from file
@@ -201,6 +219,7 @@ def generate_manual_data(trajectories_dir, output_dir):
         scene.frame_set(frame_index)
         bpy.ops.render.render(write_still=True)
         np.savetxt(os.path.join(output_dir, 'extrinsics_{:03d}.txt'.format(frame_index)), camera.matrix_world)
+
 
 if __name__ == '__main__':
     # Parse arguments
@@ -216,7 +235,9 @@ if __name__ == '__main__':
     bpy.context.scene.render.image_settings.color_mode = 'RGB'
 
     # Camera intrinsics setting
-    resolution = (1024, 768)
+    resolution = (args.resolution_x, args.resolution_y)
+    bpy.context.scene.render.resolution_x = args.resolution_x
+    bpy.context.scene.render.resolution_y = args.resolution_y
     scene = bpy.context.scene
     camera = scene.camera
     camera.data.angle = 2 * atan2(*resolution)  # Vertical fov 90 degree, horizontal fov 106 degree
@@ -287,8 +308,12 @@ if __name__ == '__main__':
         radii = np.array([x_radius, y_radius, z_radius])
         center_position = np.array([(x_range[0] + x_range[1]) / 2, (y_range[0] + y_range[1]) / 2, (z_range[0] + z_range[1]) / 2])
         stare_center = np.array([0, 0, 0])
-        render_spiral(radii, center_position, stare_center, args.spiral_view_count, output_dir=os.path.join(OUTPUT_BASE, 'spiral', args.output_dir))
+        render_spiral(radii, args.world_up_axis, center_position, stare_center, args.spiral_view_count, output_dir=os.path.join(OUTPUT_BASE, 'spiral', args.output_dir))
     elif args.mode == 'manual':
         generate_manual_data(os.path.join(DATA_BASE, 'trajectories', args.scene), os.path.join(OUTPUT_BASE, 'manual', args.output_dir))
+    elif args.mode == 'grid_center':
+        start_position = np.array([x_range[0], y_range[0], z_range[0]])
+        # render_grid_center(start_position, x_interval, y_interval, view_count_x, view_count_y, output_dir=os.path.join(OUTPUT_BASE, 'forward', args.output_dir))
+        
     else:
         print('Render mode not specified!')
