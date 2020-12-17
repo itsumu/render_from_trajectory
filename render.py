@@ -103,6 +103,28 @@ def render_forward_grid(start_position, x_interval, y_interval, view_count_x, vi
     return frame_index
 
 
+def render_grid_center(start_position, world_up_axis, stare_center, 
+                       x_interval, y_interval, view_count_x, view_count_y, 
+                       frame_start_index=0, output_dir=os.path.join(OUTPUT_BASE, 'grid_center')):
+    os.makedirs(output_dir, exist_ok=True)
+    frame_index = frame_start_index
+
+    # Render
+    for j in range(view_count_y):
+        for i in range(view_count_x):
+            current_position = start_position + np.array([x_interval, 0, 0]) * i \
+                               + np.array([0, y_interval, 0]) * j
+            camera.matrix_world = Matrix.Translation(current_position)
+            look_at(camera, Vector(stare_center), world_up_axis)
+            output_filename = 'image_{:03d}.jpg'.format(frame_index)
+            scene.render.filepath = os.path.join(output_dir, output_filename)
+            bpy.ops.render.render(write_still=True)
+            np.savetxt(os.path.join(output_dir, 'extrinsics_{:03d}.txt'.format(frame_index)), camera.matrix_world)
+
+            frame_index += 1
+
+    return frame_index
+
 def render_stare_center_x_axis(start_position, x_interval, view_count_x, frame_start_index=0, output_dir=os.path.join(OUTPUT_BASE, 'stare_center_x_axis')):
     os.makedirs(output_dir, exist_ok=True)
     frame_index = frame_start_index
@@ -313,7 +335,9 @@ if __name__ == '__main__':
         generate_manual_data(os.path.join(DATA_BASE, 'trajectories', args.scene), os.path.join(OUTPUT_BASE, 'manual', args.output_dir))
     elif args.mode == 'grid_center':
         start_position = np.array([x_range[0], y_range[0], z_range[0]])
-        # render_grid_center(start_position, x_interval, y_interval, view_count_x, view_count_y, output_dir=os.path.join(OUTPUT_BASE, 'forward', args.output_dir))
-        
+        stare_center = np.array([0, 0, 0])
+        render_grid_center(start_position, args.world_up_axis, stare_center, 
+            x_interval, y_interval, view_count_x, view_count_y,
+            output_dir=os.path.join(OUTPUT_BASE, 'grid_center', args.output_dir))
     else:
         print('Render mode not specified!')
