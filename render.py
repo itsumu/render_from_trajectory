@@ -75,7 +75,7 @@ def render_spiral(radii, world_up_axis, center_position, stare_center, view_coun
         output_filename = 'image_{:03d}.jpg'.format(frame_index)
         scene.render.filepath = os.path.join(output_dir, output_filename)
         bpy.ops.render.render(write_still=True)
-        np.savetxt(os.path.join(output_dir, 'extrinsics_{:03d}.txt'.format(frame_index)), camera.matrix_world)
+        np.savetxt(os.path.join(output_dir, 'pose_{:03d}.txt'.format(frame_index)), camera.matrix_world)
 
         frame_index += 1
 
@@ -96,7 +96,7 @@ def render_forward_grid(start_position, x_interval, y_interval, view_count_x, vi
             scene.render.filepath = os.path.join(output_dir, output_filename)
             scene.frame_set(frame_index)
             bpy.ops.render.render(write_still=True)
-            np.savetxt(os.path.join(output_dir, 'extrinsics_{:03d}.txt'.format(frame_index)), camera.matrix_world)
+            np.savetxt(os.path.join(output_dir, 'pose_{:03d}.txt'.format(frame_index)), camera.matrix_world)
 
             frame_index += 1
 
@@ -119,7 +119,7 @@ def render_grid_center(start_position, world_up_axis, stare_center,
             output_filename = 'image_{:03d}.jpg'.format(frame_index)
             scene.render.filepath = os.path.join(output_dir, output_filename)
             bpy.ops.render.render(write_still=True)
-            np.savetxt(os.path.join(output_dir, 'extrinsics_{:03d}.txt'.format(frame_index)), camera.matrix_world)
+            np.savetxt(os.path.join(output_dir, 'pose_{:03d}.txt'.format(frame_index)), camera.matrix_world)
 
             frame_index += 1
 
@@ -138,7 +138,7 @@ def render_stare_center_x_axis(start_position, x_interval, view_count_x, frame_s
         scene.render.filepath = os.path.join(output_dir, output_filename)
         scene.frame_set(frame_index)
         bpy.ops.render.render(write_still=True)
-        np.savetxt(os.path.join(output_dir, 'extrinsics_{:03d}.txt'.format(frame_index)), camera.matrix_world)
+        np.savetxt(os.path.join(output_dir, 'pose_{:03d}.txt'.format(frame_index)), camera.matrix_world)
 
         frame_index += 1
 
@@ -156,7 +156,7 @@ def render_zoom_in(start_position, z_interval, view_count_z, frame_start_index=0
         scene.render.filepath = os.path.join(output_dir, output_filename)
         scene.frame_set(frame_index)
         bpy.ops.render.render(write_still=True)
-        np.savetxt(os.path.join(output_dir, 'extrinsics_' + str(frame_index) + '.txt'), camera.matrix_world)
+        np.savetxt(os.path.join(output_dir, 'pose_' + str(frame_index) + '.txt'), camera.matrix_world)
 
         frame_index += 1
 
@@ -223,7 +223,7 @@ def generate_linear_data(start_position, end_position, view_count, scene_name):
         scene.render.filepath = os.path.join(output_dir, output_filename)
         scene.frame_set(frame_index)
         bpy.ops.render.render(write_still=True)
-        np.savetxt(os.path.join(output_dir, 'extrinsics_{:03d}.txt'.format(frame_index)), camera.matrix_world)
+        np.savetxt(os.path.join(output_dir, 'pose_{:03d}.txt'.format(frame_index)), camera.matrix_world)
 
         frame_index += 1
 
@@ -232,15 +232,15 @@ def generate_manual_data(trajectories_dir, output_dir):
     for frame_index, file_name in enumerate(sorted(os.listdir(trajectories_dir))):
         # Load from file
         file_path = os.path.join(trajectories_dir, file_name)
-        extrinsics = np.loadtxt(file_path)
+        pose = np.loadtxt(file_path)
 
         # Move camera
-        camera.matrix_world = Matrix(extrinsics)
+        camera.matrix_world = Matrix(pose)
         output_filename = 'image_{:03d}.jpg'.format(frame_index)
         scene.render.filepath = os.path.join(output_dir, output_filename)
         scene.frame_set(frame_index)
         bpy.ops.render.render(write_still=True)
-        np.savetxt(os.path.join(output_dir, 'extrinsics_{:03d}.txt'.format(frame_index)), camera.matrix_world)
+        np.savetxt(os.path.join(output_dir, 'pose_{:03d}.txt'.format(frame_index)), camera.matrix_world)
 
 
 if __name__ == '__main__':
