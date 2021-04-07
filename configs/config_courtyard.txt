@@ -1,0 +1,12 @@
+scene = court_yard
+resolution_x = 3200
+resolution_y = 2400
+x_min = -200
+x_max = 200
+y_min = -150
+y_max = 150
+z_min = 200
+z_max = 200
+view_count_x = 100
+view_count_y = 100
+world_up_axis = z
