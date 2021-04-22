@@ -1,6 +1,6 @@
 import os
 import sys
-from math import atan2
+from math import atan2, radians
 import configargparse
 
 import numpy as np
@@ -36,6 +36,7 @@ def parse_args(argv):
     parser.add_argument('--sparse_view_count_x', type=int, default=9, help='Sparse view count along x axis')
     parser.add_argument('--dense_view_count_x', type=int, default=9, help='Dense view count along x axis')
     parser.add_argument('--spiral_view_count', type=int, default=9, help='Spiral view count')
+    parser.add_argument('--radius', type=int, default=4, help='Radius for spherical render')
     parser.add_argument('--mode', type=str, default='sparse', help='Sampling mode', required=True)
     return parser.parse_args(argv)
 
@@ -125,6 +126,7 @@ def render_grid_center(start_position, world_up_axis, stare_center,
 
     return frame_index
 
+
 def render_stare_center_x_axis(start_position, x_interval, view_count_x, frame_start_index=0, output_dir=os.path.join(OUTPUT_BASE, 'stare_center_x_axis')):
     os.makedirs(output_dir, exist_ok=True)
     frame_index = frame_start_index
@@ -160,6 +162,37 @@ def render_zoom_in(start_position, z_interval, view_count_z, frame_start_index=0
 
         frame_index += 1
 
+    return frame_index
+
+
+def render_spherical(radius, world_up_axis, stare_center, view_count, 
+                     frame_start_index=0, 
+                     output_dir=os.path.join(OUTPUT_BASE, 'spherical')):
+    os.makedirs(output_dir, exist_ok=True)
+    frame_index = frame_start_index
+
+    vertical_step = radians(180.0 / view_count)
+    horizontal_step = radians(360.0 / (view_count / 2.0))
+    phi = 0.0
+    theta = 0.0
+    # Render
+    for i in range(view_count):
+        x = radius * np.cos(theta)
+        y = radius * np.sin(theta)
+        z = radius * np.cos(phi)
+        camera.matrix_world = Matrix.Translation((x, y, z))
+        look_at(camera, Vector(stare_center), world_up_axis)
+        output_filename = 'image_{:03d}.jpg'.format(frame_index)
+        scene.render.filepath = os.path.join(output_dir, output_filename)
+        bpy.ops.render.render(write_still=True)
+        np.savetxt(os.path.join(output_dir,
+                                'pose_{:03d}.txt'.format(frame_index)),
+                   camera.matrix_world)
+
+        phi += vertical_step
+        theta += horizontal_step
+        frame_index += 1
+        
     return frame_index
 
 
@@ -339,5 +372,12 @@ if __name__ == '__main__':
         render_grid_center(start_position, args.world_up_axis, stare_center, 
             x_interval, y_interval, view_count_x, view_count_y,
             output_dir=os.path.join(OUTPUT_BASE, 'grid_center', args.output_dir))
+    elif args.mode == 'spherical':
+        stare_center = np.array([0, 0, 0])
+        render_spherical(args.radius, args.world_up_axis, stare_center, 
+                         args.view_count_all, 
+                         frame_start_index=0, 
+                         output_dir=os.path.join(OUTPUT_BASE, 'spherical',
+                                                 args.output_dir))
     else:
         print('Render mode not specified!')

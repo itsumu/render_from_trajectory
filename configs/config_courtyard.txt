@@ -1,4 +1,4 @@
-scene = court_yard
+scene = courtyard
 resolution_x = 3200
 resolution_y = 2400
 x_min = -200
