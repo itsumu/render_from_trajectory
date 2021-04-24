@@ -1,1 +1,1 @@
-blender -b carve.blend -P render.py -- --config=configs/config_carve.txt --mode='sparse'
+blender -b cube.blend -P render.py -- --config=configs/config_cube.txt --mode=spherical

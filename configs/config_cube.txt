@@ -3,4 +3,4 @@ resolution_x = 1024
 resolution_y = 768
 view_count_all = 50
 world_up_axis = z
-radius = 3
+radius = 2.5

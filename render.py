@@ -36,7 +36,7 @@ def parse_args(argv):
     parser.add_argument('--sparse_view_count_x', type=int, default=9, help='Sparse view count along x axis')
     parser.add_argument('--dense_view_count_x', type=int, default=9, help='Dense view count along x axis')
     parser.add_argument('--spiral_view_count', type=int, default=9, help='Spiral view count')
-    parser.add_argument('--radius', type=int, default=4, help='Radius for spherical render')
+    parser.add_argument('--radius', type=float, default=4.0, help='Radius for spherical render')
     parser.add_argument('--mode', type=str, default='sparse', help='Sampling mode', required=True)
     return parser.parse_args(argv)
 
@@ -287,6 +287,7 @@ if __name__ == '__main__':
     args = parse_args(argv)
 
     # Output settings
+    bpy.context.scene.render.use_persistent_data = True
     bpy.context.scene.render.image_settings.color_mode = 'RGB'
 
     # Camera intrinsics setting
