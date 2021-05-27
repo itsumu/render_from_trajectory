@@ -1,0 +1,12 @@
+scene = sndd_small
+resolution_x = 3200
+resolution_y = 2400
+x_min = -1.75
+x_max = 1.75
+y_min = -1.75
+y_max = 1.75
+z_min = 2
+z_max = 2
+view_count_x = 10
+view_count_y = 10
+world_up_axis = z

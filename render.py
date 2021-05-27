@@ -5,7 +5,7 @@ import configargparse
 
 import numpy as np
 import bpy
-from mathutils import Matrix, Vector, Quaternion
+from mathutils import Matrix, Vector, Quaternion, Euler
 
 
 ROOT_DIR = bpy.path.abspath('//')
@@ -38,6 +38,9 @@ def parse_args(argv):
     parser.add_argument('--spiral_view_count', type=int, default=9, help='Spiral view count')
     parser.add_argument('--radius', type=float, default=4.0, help='Radius for spherical render')
     parser.add_argument('--mode', type=str, default='sparse', help='Sampling mode', required=True)
+    parser.add_argument('--rotate_axis', type=str, default='y')
+    parser.add_argument('--position', type=float, action='append', help='Static position')
+    
     return parser.parse_args(argv)
 
 
@@ -195,6 +198,32 @@ def render_spherical(radius, world_up_axis, stare_center, view_count,
         
     return frame_index
 
+
+def render_rotate(position, world_up_axis, rotate_axis, view_count,
+                  frame_start_index, output_dir):
+    os.makedirs(output_dir, exist_ok=True)
+    frame_index = frame_start_index
+
+    theta = radians(360.0 / view_count)
+    if world_up_axis == 'z':
+        camera.matrix_world = Matrix.Rotation(radians(90), 4, 'X') @ camera.matrix_world 
+    camera.matrix_world = Matrix.Translation(position) @ camera.matrix_world
+    # Render
+    for i in range(view_count):
+        camera.matrix_world = Matrix.Translation(position) \
+            @ Matrix.Rotation(theta, 4, rotate_axis.upper()) \
+            @ Matrix.Translation(-position) \
+            @ camera.matrix_world
+        output_filename = 'image_{:03d}.jpg'.format(frame_index)
+        scene.render.filepath = os.path.join(output_dir, output_filename)
+        bpy.ops.render.render(write_still=True)
+        np.savetxt(os.path.join(output_dir,
+                                'pose_{:03d}.txt'.format(frame_index)),
+                   camera.matrix_world)
+
+        frame_index += 1
+        
+    return frame_index
 
 def generate_training_data(x_range, y_range, x_interval, y_interval, view_count_x, view_count_y,
  depth, scene_name):
@@ -380,5 +409,13 @@ if __name__ == '__main__':
                          frame_start_index=0, 
                          output_dir=os.path.join(OUTPUT_BASE, 'spherical',
                                                  args.output_dir))
+    elif args.mode == 'rotate':
+        render_rotate(np.array(args.position),
+                      args.world_up_axis,
+                      args.rotate_axis,
+                      args.view_count_all,
+                      frame_start_index=0, 
+                      output_dir=os.path.join(OUTPUT_BASE, 'rotate',
+                                              args.output_dir))
     else:
         print('Render mode not specified!')
