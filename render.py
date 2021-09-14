@@ -20,8 +20,9 @@ def parse_args(argv):
     parser.add_argument('--scene', type=str, default='default', help='Scene name')
     parser.add_argument('--output_dir', type=str, default='default', help='Output name (Same as scene most time)')
     parser.add_argument('--world_up_axis', type=str, default='y', help='World up axis')
-    parser.add_argument('--resolution_x', type=int, default=1024, help='Image resolution along x axis')
-    parser.add_argument('--resolution_y', type=int, default=768, help='Image resolution along y axis')
+    parser.add_argument('--resolution_x', type=int, default=800, help='Image resolution along x axis')
+    parser.add_argument('--resolution_y', type=int, default=600, help='Image resolution along y axis')
+    parser.add_argument('--fov_x', type=float, default=60.0, help='Horizontal fov in degrees')
     parser.add_argument('--x_min', type=float, default=-22, help='x min')
     parser.add_argument('--x_max', type=float, default=22, help='x max')
     parser.add_argument('--y_min', type=float, default=-6, help='y min')
@@ -225,6 +226,7 @@ def render_rotate(position, world_up_axis, rotate_axis, view_count,
         
     return frame_index
 
+
 def generate_training_data(x_range, y_range, x_interval, y_interval, view_count_x, view_count_y,
  depth, scene_name):
     frame_index = 0
@@ -325,7 +327,7 @@ if __name__ == '__main__':
     bpy.context.scene.render.resolution_y = args.resolution_y
     scene = bpy.context.scene
     camera = scene.camera
-    camera.data.angle = 2 * atan2(*resolution)  # Vertical fov 90 degree, horizontal fov 106 degree
+    camera.data.angle_x = args.fov_x / 180.0 * np.pi
 
     # Camera movement boundaries, count and corresponding intervals
     x_range = (args.x_min, args.x_max)
