@@ -62,13 +62,20 @@ def look_at(camera, target_position, world_up_axis='y'):
     camera.matrix_world = camera.matrix_world @ rotation_mat
 
 
-def render_spiral(radii, world_up_axis, center_position, stare_center, view_count, frame_start_index=0, output_dir=os.path.join(OUTPUT_BASE, 'spiral')):
+def render_spiral(radii, world_up_axis, center_position, stare_center, view_count,
+                  frame_start_index=0, output_dir=os.path.join(OUTPUT_BASE, 'spiral'),
+                  move_back=False):
     os.makedirs(output_dir, exist_ok=True)
     frame_index = frame_start_index
 
     increment = 0
-    if view_count != 1:
-        increment = 1 / (view_count - 1)
+    if move_back: # Last frame same as the first one
+        if view_count > 1:
+            increment = 1 / (view_count - 1)
+    else: # Last frame not same as the first one
+        if view_count > 0:
+            increment = 1 / view_count
+
     # Render
     for i in range(view_count):
         x_coords = -np.cos(2 * np.pi * increment * i) * radii[0] + center_position[0]

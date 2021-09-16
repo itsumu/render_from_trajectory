@@ -1,8 +1,8 @@
-scene = teapot_spiral
+scene = teapot_spiral_reflective
 resolution_x = 800
 resolution_y = 600
 fov_x = 60
-spiral_view_count = 4
+spiral_view_count = 100
 x_min = -5
 x_max = 5
 y_min = -5
