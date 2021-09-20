@@ -1,4 +1,4 @@
-scene = teapot_spiral_reflective
+scene = teapot_background
 resolution_x = 800
 resolution_y = 600
 fov_x = 60

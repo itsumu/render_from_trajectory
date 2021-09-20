@@ -314,6 +314,21 @@ def generate_manual_data(trajectories_dir, output_dir):
         np.savetxt(os.path.join(output_dir, 'pose_{:03d}.txt'.format(frame_index)), camera.matrix_world)
 
 
+def setup_renderer(scene):
+    # Renderer & device settings
+    scene.render.engine = 'CYCLES'
+    bpy.context.preferences.addons["cycles"].preferences.compute_device_type =\
+        'CUDA'
+    scene.cycles.device = 'GPU'
+    bpy.context.preferences.addons["cycles"].preferences.get_devices()
+
+    # Data settings
+    scene.render.use_persistent_data = True
+    
+    # Output settings
+    scene.render.image_settings.color_mode = 'RGBA'
+    
+
 if __name__ == '__main__':
     # Parse arguments
     argv = sys.argv
@@ -324,15 +339,14 @@ if __name__ == '__main__':
 
     args = parse_args(argv)
 
-    # Output settings
-    bpy.context.scene.render.use_persistent_data = True
-    bpy.context.scene.render.image_settings.color_mode = 'RGB'
-
+    # Render settings
+    scene = bpy.context.scene
+    setup_renderer(scene)
+    
     # Camera intrinsics setting
     resolution = (args.resolution_x, args.resolution_y)
-    bpy.context.scene.render.resolution_x = args.resolution_x
-    bpy.context.scene.render.resolution_y = args.resolution_y
-    scene = bpy.context.scene
+    scene.render.resolution_x = args.resolution_x
+    scene.render.resolution_y = args.resolution_y
     camera = scene.camera
     camera.data.angle_x = args.fov_x / 180.0 * np.pi
 
