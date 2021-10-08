@@ -1,0 +1,13 @@
+scene = nest_fine
+resolution_x = 800
+resolution_y = 600
+fov_x = 60
+spiral_view_count = 120
+x_min = -3
+x_max = 3
+y_min = -3
+y_max = 3
+z_min = 1.5
+z_max = 1.5
+world_up_axis = z
+mode = spiral

@@ -207,6 +207,37 @@ def render_spherical(radius, world_up_axis, stare_center, view_count,
     return frame_index
 
 
+def render_hemisphere(radius, world_up_axis, stare_center, view_count, 
+                      frame_start_index=0, 
+                      output_dir=os.path.join(OUTPUT_BASE, 'hemisphere')):
+    os.makedirs(output_dir, exist_ok=True)
+    frame_index = frame_start_index
+    
+    # Sample positions
+    positions = generate_hemisphere_data(stare_center, radius, view_count)
+    
+    # Render
+    for i in range(view_count):
+        if world_up_axis == 'z':
+            x, y, z = positions[i]
+        elif world_up_axis == 'y':
+            z, x, y = positions[i]
+        else:
+            return
+        camera.matrix_world = Matrix.Translation((x, y, z))
+        look_at(camera, Vector(stare_center), world_up_axis)
+        output_filename = 'image_{:03d}.jpg'.format(frame_index)
+        scene.render.filepath = os.path.join(output_dir, output_filename)
+        bpy.ops.render.render(write_still=True)
+        np.savetxt(os.path.join(output_dir,
+                                'pose_{:03d}.txt'.format(frame_index)),
+                   camera.matrix_world)
+
+        frame_index += 1
+        
+    return frame_index
+
+
 def render_rotate(position, world_up_axis, rotate_axis, view_count,
                   frame_start_index, output_dir):
     os.makedirs(output_dir, exist_ok=True)
@@ -313,6 +344,42 @@ def generate_manual_data(trajectories_dir, output_dir):
         bpy.ops.render.render(write_still=True)
         np.savetxt(os.path.join(output_dir, 'pose_{:03d}.txt'.format(frame_index)), camera.matrix_world)
 
+
+def generate_hemisphere_data(center, radius, sample_count):
+    # Best-candidate algorithm
+    candidate_count = 10
+    samples = []
+    for i in range(sample_count): # For each required sample
+        best_candidate_dist = 0
+        best_candidate = np.array([10, 10, 10])
+        for j in range(candidate_count): # For each candidate, find distant one
+            new_candidate_xy = np.random.uniform(-1, 1, 2)
+            while (np.linalg.norm(new_candidate_xy) > 1):
+                new_candidate_xy = np.random.uniform(-1, 1, 2)
+            new_candidate_z = np.sqrt(1 - 
+                                      new_candidate_xy[0] * new_candidate_xy[0] -
+                                      new_candidate_xy[1] * new_candidate_xy[1])
+            new_candidate = np.array([new_candidate_xy[0],
+                                      new_candidate_xy[1],
+                                      new_candidate_z])
+            if i == 0:
+                best_candidate = new_candidate
+                break                
+            
+            smallest_dist = 100
+            for sample in samples: # For each fixed sample, find smallest distance
+                dist = np.arccos(sample @ new_candidate)
+                smallest_dist = min(smallest_dist, dist)
+            if smallest_dist > best_candidate_dist:
+                best_candidate = new_candidate
+                best_candidate_dist = smallest_dist
+        samples.append(best_candidate) 
+        
+    # All calculations before are based on origin of [0,0,0], radius of 1
+    # Should be transformed to origin or "center", radius of "radius"
+    for i in range(sample_count):
+        samples[i] = samples[i] * radius + center
+    return samples
 
 def setup_renderer(scene):
     # Renderer & device settings
@@ -432,6 +499,13 @@ if __name__ == '__main__':
                          frame_start_index=0, 
                          output_dir=os.path.join(OUTPUT_BASE, 'spherical',
                                                  args.output_dir))
+    elif args.mode == 'hemisphere':
+        stare_center = np.array([0, 0, 0])
+        render_hemisphere(args.radius, args.world_up_axis, stare_center,
+                          args.view_count_all, 
+                          frame_start_index=0, 
+                          output_dir=os.path.join(OUTPUT_BASE, 'hemisphere',
+                                                  args.output_dir))
     elif args.mode == 'rotate':
         render_rotate(np.array(args.position),
                       args.world_up_axis,
