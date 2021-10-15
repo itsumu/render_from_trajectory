@@ -345,36 +345,45 @@ def generate_manual_data(trajectories_dir, output_dir):
         np.savetxt(os.path.join(output_dir, 'pose_{:03d}.txt'.format(frame_index)), camera.matrix_world)
 
 
-def generate_hemisphere_data(center, radius, sample_count):
-    # Best-candidate algorithm
-    candidate_count = 10
+def generate_hemisphere_data(center, radius, sample_count, mode='random'):
     samples = []
-    for i in range(sample_count): # For each required sample
-        best_candidate_dist = 0
-        best_candidate = np.array([10, 10, 10])
-        for j in range(candidate_count): # For each candidate, find distant one
-            new_candidate_xy = np.random.uniform(-1, 1, 2)
-            while (np.linalg.norm(new_candidate_xy) > 1):
+    if mode == 'random':
+        for i in range(sample_count):
+            xy_coords = np.random.uniform(-1, 1, 2)
+            while np.linalg.norm(xy_coords) > 1:
+                xy_coords = np.random.uniform(-1, 1, 2)        
+            z_coord = np.sqrt(1 - xy_coords[0] * xy_coords[0] -
+                            xy_coords[1] * xy_coords[1])
+            samples.append(np.array([xy_coords[0], xy_coords[1], z_coord]))
+    elif mode == 'uniform':
+        # Best-candidate algorithm
+        candidate_count = 10
+        for i in range(sample_count): # For each required sample
+            best_candidate_dist = 0
+            best_candidate = np.array([10, 10, 10])
+            for j in range(candidate_count): # For each candidate, find distant one
                 new_candidate_xy = np.random.uniform(-1, 1, 2)
-            new_candidate_z = np.sqrt(1 - 
-                                      new_candidate_xy[0] * new_candidate_xy[0] -
-                                      new_candidate_xy[1] * new_candidate_xy[1])
-            new_candidate = np.array([new_candidate_xy[0],
-                                      new_candidate_xy[1],
-                                      new_candidate_z])
-            if i == 0:
-                best_candidate = new_candidate
-                break                
+                while np.linalg.norm(new_candidate_xy) > 1:
+                    new_candidate_xy = np.random.uniform(-1, 1, 2)
+                new_candidate_z = np.sqrt(1 - 
+                                        new_candidate_xy[0] * new_candidate_xy[0] -
+                                        new_candidate_xy[1] * new_candidate_xy[1])
+                new_candidate = np.array([new_candidate_xy[0],
+                                        new_candidate_xy[1],
+                                        new_candidate_z])
+                if i == 0:
+                    best_candidate = new_candidate
+                    break                
+                
+                smallest_dist = 100
+                for sample in samples: # For each fixed sample, find smallest distance
+                    dist = np.arccos(sample @ new_candidate)
+                    smallest_dist = min(smallest_dist, dist)
+                if smallest_dist > best_candidate_dist:
+                    best_candidate = new_candidate
+                    best_candidate_dist = smallest_dist
+            samples.append(best_candidate) 
             
-            smallest_dist = 100
-            for sample in samples: # For each fixed sample, find smallest distance
-                dist = np.arccos(sample @ new_candidate)
-                smallest_dist = min(smallest_dist, dist)
-            if smallest_dist > best_candidate_dist:
-                best_candidate = new_candidate
-                best_candidate_dist = smallest_dist
-        samples.append(best_candidate) 
-        
     # All calculations before are based on origin of [0,0,0], radius of 1
     # Should be transformed to origin or "center", radius of "radius"
     for i in range(sample_count):
