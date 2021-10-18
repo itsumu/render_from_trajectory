@@ -1,1 +1,1 @@
-blender -b cube.blend -P render.py -- --config=configs/config_cube.txt --mode=spherical
+blender -b teapot.blend -P render_blender.py -- --config=configs/config_teapot.txt --mode=mesh

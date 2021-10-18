@@ -18,3 +18,4 @@ output/
 
 # Temporaries
 scan_single.py
+__pycache__

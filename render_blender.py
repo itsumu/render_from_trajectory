@@ -11,7 +11,8 @@ from mathutils import Matrix, Vector, Quaternion, Euler
 ROOT_DIR = bpy.path.abspath('//')
 DATA_BASE = os.path.join(ROOT_DIR, 'data')
 OUTPUT_BASE = os.path.join(ROOT_DIR, 'output')
-
+sys.path.append(ROOT_DIR)
+from generate_trajectory import *
 
 def parse_args(argv):
     parser = configargparse.ArgumentParser()
@@ -41,7 +42,7 @@ def parse_args(argv):
     parser.add_argument('--mode', type=str, default='sparse', help='Sampling mode', required=True)
     parser.add_argument('--rotate_axis', type=str, default='y')
     parser.add_argument('--position', type=float, action='append', help='Static position')
-    
+    parser.add_argument('--extra_mesh', type=str, default='./data/mesh/hemisphere/hemisphere.obj', help='Extra mesh as trajectory')
     return parser.parse_args(argv)
 
 
@@ -60,6 +61,19 @@ def look_at(camera, target_position, world_up_axis='y'):
     rotation_mat = Matrix((right, up, -forward)).transposed().to_4x4()
     print(rotation_mat)
     camera.matrix_world = camera.matrix_world @ rotation_mat
+
+
+def render_poses(poses, output_dir):
+    os.makedirs(output_dir, exist_ok=True)
+    
+    for i in range(len(poses)):
+        camera.matrix_world = Matrix(poses[i])
+        output_filename = 'image_{:03d}.jpg'.format(i)
+        scene.render.filepath = os.path.join(output_dir, output_filename)
+        bpy.ops.render.render(write_still=True)
+        np.savetxt(os.path.join(output_dir,
+                                'pose_{:03d}.txt'.format(i)),
+                   camera.matrix_world)
 
 
 def render_spiral(radii, world_up_axis, center_position, stare_center, view_count,
@@ -207,35 +221,10 @@ def render_spherical(radius, world_up_axis, stare_center, view_count,
     return frame_index
 
 
-def render_hemisphere(radius, world_up_axis, stare_center, view_count, 
-                      frame_start_index=0, 
+def render_hemisphere(radius, world_up, stare_center, view_count, 
                       output_dir=os.path.join(OUTPUT_BASE, 'hemisphere')):
-    os.makedirs(output_dir, exist_ok=True)
-    frame_index = frame_start_index
-    
-    # Sample positions
-    positions = generate_hemisphere_data(stare_center, radius, view_count)
-    
-    # Render
-    for i in range(view_count):
-        if world_up_axis == 'z':
-            x, y, z = positions[i]
-        elif world_up_axis == 'y':
-            z, x, y = positions[i]
-        else:
-            return
-        camera.matrix_world = Matrix.Translation((x, y, z))
-        look_at(camera, Vector(stare_center), world_up_axis)
-        output_filename = 'image_{:03d}.jpg'.format(frame_index)
-        scene.render.filepath = os.path.join(output_dir, output_filename)
-        bpy.ops.render.render(write_still=True)
-        np.savetxt(os.path.join(output_dir,
-                                'pose_{:03d}.txt'.format(frame_index)),
-                   camera.matrix_world)
-
-        frame_index += 1
-        
-    return frame_index
+    poses = generate_poses_hemisphere(view_count, world_up, stare_center, radius)
+    render_poses(poses, output_dir)
 
 
 def render_rotate(position, world_up_axis, rotate_axis, view_count,
@@ -264,6 +253,12 @@ def render_rotate(position, world_up_axis, rotate_axis, view_count,
         
     return frame_index
 
+
+def render_mesh(world_up, stare_center, mesh_path, scale,
+                output_dir=os.path.join(OUTPUT_BASE, 'mesh')):
+    poses = generate_poses_mesh(world_up, stare_center, mesh_path, scale)
+    render_poses(poses, output_dir)
+        
 
 def generate_training_data(x_range, y_range, x_interval, y_interval, view_count_x, view_count_y,
  depth, scene_name):
@@ -390,6 +385,7 @@ def generate_hemisphere_data(center, radius, sample_count, mode='random'):
         samples[i] = samples[i] * radius + center
     return samples
 
+
 def setup_renderer(scene):
     # Renderer & device settings
     scene.render.engine = 'CYCLES'
@@ -426,6 +422,12 @@ if __name__ == '__main__':
     camera = scene.camera
     camera.data.angle_x = args.fov_x / 180.0 * np.pi
 
+    # Specify world up
+    if args.world_up_axis == 'z':
+        world_up = np.array([0, 0, 1])
+    elif args.world_up_axis == 'y':
+        world_up = np.array([0, 1, 0])
+        
     # Camera movement boundaries, count and corresponding intervals
     x_range = (args.x_min, args.x_max)
     y_range = (args.y_min, args.y_max)
@@ -510,9 +512,8 @@ if __name__ == '__main__':
                                                  args.output_dir))
     elif args.mode == 'hemisphere':
         stare_center = np.array([0, 0, 0])
-        render_hemisphere(args.radius, args.world_up_axis, stare_center,
+        render_hemisphere(args.radius, world_up, stare_center,
                           args.view_count_all, 
-                          frame_start_index=0, 
                           output_dir=os.path.join(OUTPUT_BASE, 'hemisphere',
                                                   args.output_dir))
     elif args.mode == 'rotate':
@@ -523,5 +524,10 @@ if __name__ == '__main__':
                       frame_start_index=0, 
                       output_dir=os.path.join(OUTPUT_BASE, 'rotate',
                                               args.output_dir))
+    elif args.mode == 'mesh':
+        stare_center = np.array([0, 0, 0])
+        render_mesh(world_up, stare_center,
+                    os.path.join(args.extra_mesh), args.radius,
+                    output_dir=os.path.join(OUTPUT_BASE, 'mesh', args.output_dir))
     else:
         print('Render mode not specified!')
