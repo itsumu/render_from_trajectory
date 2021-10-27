@@ -1,7 +1,7 @@
 import numpy as np
 
 
-def look_at(camera_pos, world_up, target_pos):
+def look_at(camera_pos, world_up, target_pos, camera_up): # Camera up not used for now
     forward = target_pos - camera_pos
     forward = forward / np.linalg.norm(forward)
     while forward @ world_up == 1 or forward @ world_up == -1:
@@ -71,11 +71,27 @@ def generate_poses_hemisphere(view_count, world_up, origin, radius):
     return poses
 
 
-def generate_poses_mesh(world_up, origin, mesh_path, scale):
+def generate_poses_mesh(world_up, origin, mesh_path, scale, remove_duplicate=False):
     import trimesh    
-    
+
     mesh = trimesh.load_mesh(mesh_path, process=False)
-    positions = mesh.vertices * scale + origin
-    poses = [look_at(positions[i], world_up, origin) for i in range(len(positions))]
-    
+    vertices = mesh.vertices
+    if remove_duplicate:
+        dist_epsilon = 1e-3
+        for i in range(len(vertices)):
+            j = i + 1
+            while j < len(vertices):
+                if np.linalg.norm(vertices[j] - vertices[i]) < dist_epsilon:
+                    vertices = np.delete(vertices, j, axis=0)
+                else:
+                    j += 1
+    positions = vertices * scale + origin
+
+    poses = []
+    last_cam_up = world_up
+    for i in range(len(positions)):
+        new_pose = look_at(positions[i], world_up, origin, last_cam_up)
+        poses.append(new_pose)
+        last_cam_up = new_pose[:3, 1]
+        
     return poses

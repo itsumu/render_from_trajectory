@@ -10,7 +10,8 @@ ROOT_DIR = os.path.dirname(__file__)
 OUTPUT_BASE = os.path.join(ROOT_DIR, 'output')
 sys.path.append(ROOT_DIR)
 from generate_trajectory import *
-
+import importlib
+importlib.reload(sys.modules['generate_trajectory'])
 
 def render_poses(camera, poses, output_dir):
     os.makedirs(output_dir, exist_ok=True)
@@ -56,7 +57,8 @@ def render_images():
     if mode == 'hemisphere':
         poses = generate_poses_hemisphere(view_count, world_up, stare_center, radius)
     elif mode == 'mesh':
-        poses = generate_poses_mesh(world_up, stare_center, os.path.join(ROOT_DIR, 'data/mesh/hemisphere/hemisphere.obj'), radius)
+        poses = generate_poses_mesh(world_up, stare_center, os.path.join(ROOT_DIR, 'data/mesh/hemisphere/hemisphere.obj'), radius,
+                                    True)
     else:
         print('Render mode not exist!')
         exit(1)
@@ -70,8 +72,9 @@ def render_images():
         
     if do_save_pose:
         save_poses(poses, os.path.join(OUTPUT_BASE, mode, scene_name),
-                   True, True, pos_offset, scale_factor)
+                   True, scale_position, pos_offset, scale_factor)
         
+    main_camera.pos = camera_default_pos
         
 if __name__ == '__main__':
     render_images()
