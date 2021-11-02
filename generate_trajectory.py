@@ -66,7 +66,7 @@ def sample_positions_on_hemisphere(sample_count, origin, radius, mode='uniform')
 
 def generate_poses_hemisphere(view_count, world_up, origin, radius):
     positions = sample_positions_on_hemisphere(view_count, origin, radius)
-    poses = [look_at(position, world_up, origin) for position in positions]
+    poses = [look_at(position, world_up, origin, world_up) for position in positions]
     
     return poses
 
@@ -94,4 +94,28 @@ def generate_poses_mesh(world_up, origin, mesh_path, scale, remove_duplicate=Fal
         poses.append(new_pose)
         last_cam_up = new_pose[:3, 1]
         
+    return poses
+
+
+def generate_poses_log_file(origin, scale, log_path):
+    from scipy.spatial.transform import Rotation
+    
+    poses = []
+    with open(log_path, 'r') as log_file:
+        line = log_file.readline()
+        while line != '':
+            segments = line.split(',')
+            pitch, roll, yaw = segments[4:7]
+            default_mat = Rotation.from_euler('x', 90, degrees=True).as_matrix()
+            pitch_mat = Rotation.from_euler('x', -float(pitch), degrees=True).as_matrix()
+            yaw_mat = Rotation.from_euler('z', float(yaw), degrees=True).as_matrix()
+            
+            rotation_mat = yaw_mat @ pitch_mat @ default_mat
+            position_vec = np.array(segments[1:4]).astype(np.float) / scale + origin
+            pose = np.concatenate((rotation_mat, np.expand_dims(position_vec, axis=-1)),
+                                    axis=-1)
+            pose = np.concatenate((pose, np.array([[0, 0, 0, 1]])), axis=0)
+            
+            poses.append(pose)
+            line = log_file.readline()
     return poses
