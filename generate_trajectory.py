@@ -119,3 +119,25 @@ def generate_poses_log_file(origin, scale, log_path):
             poses.append(pose)
             line = log_file.readline()
     return poses
+
+
+def generate_poses_grid_box(origin, interval, grid_size,
+                            world_up, forward, disturb=True):
+    '''
+        origin: (x_min, y_min, z_min)
+        interval: (x_width, y_width, z_width) or interval
+        grid_size: (x_count, y_count, z_count)
+    '''
+    poses = []
+    x_count, y_count, z_count = grid_size
+    for i in range(x_count):
+        for j in range(y_count):
+            for k in range(z_count):
+                position_vec = origin + np.array([i, j, k]) * interval
+                target_pos = position_vec + forward
+                if disturb:
+                    random_disturb = np.random.rand(3)
+                    target_pos += 0.1 * random_disturb / np.linalg.norm(random_disturb)
+                pose = look_at(position_vec, world_up, target_pos, world_up)
+                poses.append(pose)
+    return poses
