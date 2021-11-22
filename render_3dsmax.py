@@ -19,7 +19,7 @@ def render_poses(camera, poses, output_dir):
     for i in range(len(poses)):
         position = poses[i][:3, -1]
         rotation = poses[i][:3, :3]
-        if camera.rotation is not None:
+        if hasattr(camera, 'rotation'):
             camera.rotation = rt.Matrix3(rt.Point3(float(rotation[0, 0]), float(rotation[0, 1]), float(rotation[0, 2])),
                                          rt.Point3(float(rotation[1, 0]), float(rotation[1, 1]), float(rotation[1, 2])),
                                          rt.Point3(float(rotation[2, 0]), float(rotation[2, 1]), float(rotation[2, 2])),
@@ -85,7 +85,7 @@ def render_images(scene_name, mode, do_render, do_save_pose,
     # Render / Save poses
     camera_default_pos = np.array(main_camera.pos)
     camera_default_rot = None
-    if main_camera.rotation is not None:
+    if hasattr(main_camera, 'rotation'):
         camera_default_rot = main_camera.rotation
     pos_offset = None
     if stare_center is not None:
@@ -101,7 +101,7 @@ def render_images(scene_name, mode, do_render, do_save_pose,
                    True, scale_position, pos_offset, scale_factor)
         
     main_camera.pos = camera_default_pos
-    if main_camera.rotation is not None:
+    if hasattr(main_camera, 'rotation'):
         main_camera.rotation = camera_default_rot
             
 
