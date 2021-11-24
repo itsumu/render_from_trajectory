@@ -1,0 +1,7 @@
+scene_name = square
+base_height = 3000
+side_length_x = 24000
+side_length_y = 14000
+side_length_z = 10000
+interval = 2000
+mode = grid_box

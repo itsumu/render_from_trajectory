@@ -1,17 +1,34 @@
 import os
 import sys
 
+import configargparse
 import numpy as np
 import pymxs
 from pymxs import runtime as rt
 from scipy.spatial.transform import Rotation
 
 ROOT_DIR = os.path.dirname(__file__)
+CONFIG_DIR = os.path.join(ROOT_DIR, 'configs')
 OUTPUT_BASE = os.path.join(ROOT_DIR, 'output')
 sys.path.append(ROOT_DIR)
 from generate_trajectory import *
 import importlib
 importlib.reload(sys.modules['generate_trajectory'])
+
+
+def parse_args(config_file_path):
+    parser = configargparse.ArgumentParser()
+
+    parser.add_argument('--config', is_config_file=True, default=config_file_path,
+                        help='Config file path')
+    parser.add_argument('--scene_name', type=str)
+    parser.add_argument('--mode', type=str)
+    parser.add_argument('--base_height', type=float, help='Base camera height')
+    parser.add_argument('--side_length_x', type=float, help='Grid box: Side length')
+    parser.add_argument('--side_length_y', type=float, help='Grid box: Side length')
+    parser.add_argument('--side_length_z', type=float, help='Grid box: Side length')
+    parser.add_argument('--interval', type=float, help='Grid box: interval')
+    return parser.parse_args()
 
 
 def render_poses(camera, poses, output_dir):
@@ -42,7 +59,7 @@ def save_poses(poses, output_dir, centrialize=False, scale=False,
     
     
 def render_images(scene_name, mode, do_render, do_save_pose,
-                  scale_position, scale_factor):
+                  scale_position, scale_factor, args):
     # Global objects
     main_camera = rt.getActiveCamera()
     
@@ -50,15 +67,15 @@ def render_images(scene_name, mode, do_render, do_save_pose,
     view_count = 100
     world_up = np.array([0, 0, 1])
     stare_center = None
-    if main_camera.target is not None:
+    if hasattr(main_camera, 'target') and main_camera.target is not None:
         stare_center = np.array(main_camera.target.pos)
     origin = np.array(rt.getNodeByName('Origin').pos)
     radius = 30000
     
     # Grid configs
-    base_height = 10000
-    side_lengths = np.array([40000, 40000, 20000])
-    interval = 2500
+    base_height = args.base_height
+    side_lengths = np.array([args.side_length_x, args.side_length_y, args.side_length_z])
+    interval = args.interval
     grid_size = (side_lengths / interval + 1).astype(np.int)
     grid_origin = np.array([origin[0] - side_lengths[0] / 2,
                             origin[1] - side_lengths[1] / 2,
@@ -105,15 +122,16 @@ def render_images(scene_name, mode, do_render, do_save_pose,
         main_camera.rotation = camera_default_rot
             
 
-if __name__ == '__main__':
-    scene_name = 'nest'
-    mode = 'grid_box'
+if __name__ == '__main__':   
+    args = parse_args(os.path.join(CONFIG_DIR, 'config_square.txt'))
+    scene_name = args.scene_name
+    mode = args.mode
     do_render = False
     do_save_pose = True
     scale_position = True
     scale_factor = 0.0001
     
     render_images(scene_name, mode, do_render, do_save_pose,
-                  scale_position, scale_factor)
+                  scale_position, scale_factor, args)
     print('Done')
     

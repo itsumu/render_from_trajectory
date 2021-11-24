@@ -1,0 +1,7 @@
+scene_name = Olympics
+base_height = 10000
+side_length_x = 40000
+side_length_y = 40000
+side_length_z = 20000
+interval = 2500
+mode = grid_box
