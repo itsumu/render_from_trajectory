@@ -62,11 +62,11 @@ def render_spherical(radius, world_up_axis, stare_center, view_count,
         z = radius * np.cos(phi)
         camera.matrix_world = Matrix.Translation((x, y, z))
         look_at(camera, Vector(stare_center), world_up_axis)
-        output_filename = 'r_{0:03d}.png'.format(frame_index)
+        output_filename = 'r_{0:05d}.png'.format(frame_index)
         scene.render.filepath = os.path.join(output_base, split, output_filename)
         bpy.ops.render.render(write_still=True)
         frame_data = {
-            'file_path': './' + split + '/r_{0:03d}'.format(frame_index),
+            'file_path': './' + split + '/r_{0:05d}'.format(frame_index),
             'rotation': horizontal_step / 2.0,
             'transform_matrix': listify_matrix(camera.matrix_world)
         }

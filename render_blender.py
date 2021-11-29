@@ -68,11 +68,11 @@ def render_poses(poses, output_dir):
     
     for i in range(len(poses)):
         camera.matrix_world = Matrix(poses[i])
-        output_filename = 'image_{:03d}.jpg'.format(i)
+        output_filename = 'image_{:05d}.jpg'.format(i)
         scene.render.filepath = os.path.join(output_dir, output_filename)
         bpy.ops.render.render(write_still=True)
         np.savetxt(os.path.join(output_dir,
-                                'pose_{:03d}.txt'.format(i)),
+                                'pose_{:05d}.txt'.format(i)),
                    camera.matrix_world)
 
 
@@ -98,10 +98,10 @@ def render_spiral(radii, world_up_axis, center_position, stare_center, view_coun
         current_position = np.array([x_coords, y_coords, z_coords])
         camera.matrix_world = Matrix.Translation(current_position)
         look_at(camera, Vector(stare_center), world_up_axis)
-        output_filename = 'image_{:03d}.jpg'.format(frame_index)
+        output_filename = 'image_{:05d}.jpg'.format(frame_index)
         scene.render.filepath = os.path.join(output_dir, output_filename)
         bpy.ops.render.render(write_still=True)
-        np.savetxt(os.path.join(output_dir, 'pose_{:03d}.txt'.format(frame_index)), camera.matrix_world)
+        np.savetxt(os.path.join(output_dir, 'pose_{:05d}.txt'.format(frame_index)), camera.matrix_world)
 
         frame_index += 1
 
@@ -118,11 +118,11 @@ def render_forward_grid(start_position, x_interval, y_interval, view_count_x, vi
             current_position = start_position + np.array([x_interval, 0, 0]) * i + np.array([0,
              y_interval, 0]) * j
             camera.matrix_world = Matrix.Translation(current_position)
-            output_filename = 'image_{:03d}.jpg'.format(frame_index)
+            output_filename = 'image_{:05d}.jpg'.format(frame_index)
             scene.render.filepath = os.path.join(output_dir, output_filename)
             scene.frame_set(frame_index)
             bpy.ops.render.render(write_still=True)
-            np.savetxt(os.path.join(output_dir, 'pose_{:03d}.txt'.format(frame_index)), camera.matrix_world)
+            np.savetxt(os.path.join(output_dir, 'pose_{:05d}.txt'.format(frame_index)), camera.matrix_world)
 
             frame_index += 1
 
@@ -142,10 +142,10 @@ def render_grid_center(start_position, world_up_axis, stare_center,
                                + np.array([0, y_interval, 0]) * j
             camera.matrix_world = Matrix.Translation(current_position)
             look_at(camera, Vector(stare_center), world_up_axis)
-            output_filename = 'image_{:03d}.jpg'.format(frame_index)
+            output_filename = 'image_{:05d}.jpg'.format(frame_index)
             scene.render.filepath = os.path.join(output_dir, output_filename)
             bpy.ops.render.render(write_still=True)
-            np.savetxt(os.path.join(output_dir, 'pose_{:03d}.txt'.format(frame_index)), camera.matrix_world)
+            np.savetxt(os.path.join(output_dir, 'pose_{:05d}.txt'.format(frame_index)), camera.matrix_world)
 
             frame_index += 1
 
@@ -161,11 +161,11 @@ def render_stare_center_x_axis(start_position, x_interval, view_count_x, frame_s
         current_position = start_position + np.array([x_interval, 0, 0]) * i
         camera.matrix_world = Matrix.Translation(current_position)
         look_at(camera, Vector((0, 0, 0)))
-        output_filename = 'image_{:03d}.jpg'.format(frame_index)
+        output_filename = 'image_{:05d}.jpg'.format(frame_index)
         scene.render.filepath = os.path.join(output_dir, output_filename)
         scene.frame_set(frame_index)
         bpy.ops.render.render(write_still=True)
-        np.savetxt(os.path.join(output_dir, 'pose_{:03d}.txt'.format(frame_index)), camera.matrix_world)
+        np.savetxt(os.path.join(output_dir, 'pose_{:05d}.txt'.format(frame_index)), camera.matrix_world)
 
         frame_index += 1
 
@@ -179,7 +179,7 @@ def render_zoom_in(start_position, z_interval, view_count_z, frame_start_index=0
     for i in range(view_count_z):
         current_position = start_position + np.array([0, 0, z_interval]) * i
         camera.matrix_world = Matrix.Translation(current_position)
-        output_filename = 'image_{:03d}.jpg'.format(i)
+        output_filename = 'image_{:05d}.jpg'.format(i)
         scene.render.filepath = os.path.join(output_dir, output_filename)
         scene.frame_set(frame_index)
         bpy.ops.render.render(write_still=True)
@@ -207,11 +207,11 @@ def render_spherical(radius, world_up_axis, stare_center, view_count,
         z = radius * np.cos(phi)
         camera.matrix_world = Matrix.Translation((x, y, z))
         look_at(camera, Vector(stare_center), world_up_axis)
-        output_filename = 'image_{:03d}.jpg'.format(frame_index)
+        output_filename = 'image_{:05d}.jpg'.format(frame_index)
         scene.render.filepath = os.path.join(output_dir, output_filename)
         bpy.ops.render.render(write_still=True)
         np.savetxt(os.path.join(output_dir,
-                                'pose_{:03d}.txt'.format(frame_index)),
+                                'pose_{:05d}.txt'.format(frame_index)),
                    camera.matrix_world)
 
         phi += vertical_step
@@ -242,11 +242,11 @@ def render_rotate(position, world_up_axis, rotate_axis, view_count,
             @ Matrix.Rotation(theta, 4, rotate_axis.upper()) \
             @ Matrix.Translation(-position) \
             @ camera.matrix_world
-        output_filename = 'image_{:03d}.jpg'.format(frame_index)
+        output_filename = 'image_{:05d}.jpg'.format(frame_index)
         scene.render.filepath = os.path.join(output_dir, output_filename)
         bpy.ops.render.render(write_still=True)
         np.savetxt(os.path.join(output_dir,
-                                'pose_{:03d}.txt'.format(frame_index)),
+                                'pose_{:05d}.txt'.format(frame_index)),
                    camera.matrix_world)
 
         frame_index += 1
@@ -316,11 +316,11 @@ def generate_linear_data(start_position, end_position, view_count, scene_name):
     for i in range(view_count):
         current_position = start_position + interval * i
         camera.matrix_world = Matrix.Translation(current_position)
-        output_filename = 'image_{:03d}.jpg'.format(frame_index)
+        output_filename = 'image_{:05d}.jpg'.format(frame_index)
         scene.render.filepath = os.path.join(output_dir, output_filename)
         scene.frame_set(frame_index)
         bpy.ops.render.render(write_still=True)
-        np.savetxt(os.path.join(output_dir, 'pose_{:03d}.txt'.format(frame_index)), camera.matrix_world)
+        np.savetxt(os.path.join(output_dir, 'pose_{:05d}.txt'.format(frame_index)), camera.matrix_world)
 
         frame_index += 1
 
@@ -333,11 +333,11 @@ def generate_manual_data(trajectories_dir, output_dir):
 
         # Move camera
         camera.matrix_world = Matrix(pose)
-        output_filename = 'image_{:03d}.jpg'.format(frame_index)
+        output_filename = 'image_{:05d}.jpg'.format(frame_index)
         scene.render.filepath = os.path.join(output_dir, output_filename)
         scene.frame_set(frame_index)
         bpy.ops.render.render(write_still=True)
-        np.savetxt(os.path.join(output_dir, 'pose_{:03d}.txt'.format(frame_index)), camera.matrix_world)
+        np.savetxt(os.path.join(output_dir, 'pose_{:05d}.txt'.format(frame_index)), camera.matrix_world)
 
 
 def generate_hemisphere_data(center, radius, sample_count, mode='random'):
