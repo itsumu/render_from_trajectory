@@ -1,14 +1,23 @@
-scene = teapot_background
+scene = teapot_dense_grid
+
 resolution_x = 800
 resolution_y = 600
 fov_x = 60
-spiral_view_count = 100
-x_min = -5
-x_max = 5
-y_min = -5
-y_max = 5
+
+spiral_view_count = 72
+x_min = -3.5
+x_max = 3.5
+y_min = -3.5
+y_max = 3.5
 z_min = 0
 z_max = 0
 world_up_axis = z
-radius = 5
+
+radius = 3.5
 view_count_all = 100
+
+extra_mesh = ./data/mesh/teapot/teapot.obj
+side_length_x = 7
+side_length_y = 7
+side_length_z = 7
+interval = 1.75

@@ -42,6 +42,10 @@ def parse_args(argv):
     parser.add_argument('--mode', type=str, default='sparse', help='Sampling mode', required=True)
     parser.add_argument('--rotate_axis', type=str, default='y')
     parser.add_argument('--position', type=float, action='append', help='Static position')
+    parser.add_argument('--side_length_x', type=float, default=0, help='Side length for dense grid')
+    parser.add_argument('--side_length_y', type=float, default=0, help='Side length for dense grid')
+    parser.add_argument('--side_length_z', type=float, default=0, help='Side length for dense grid')
+    parser.add_argument('--interval', type=float, default=0, help='Interval for dense grid')
     parser.add_argument('--extra_mesh', type=str, default='./data/mesh/hemisphere/hemisphere.obj', help='Extra mesh as trajectory')
     return parser.parse_args(argv)
 
@@ -259,6 +263,14 @@ def render_mesh(world_up, stare_center, mesh_path, scale,
     poses = generate_poses_mesh(world_up, stare_center, mesh_path, scale)
     render_poses(poses, output_dir)
         
+def render_dense_grid(origin, interval, grid_size, world_up,
+                      foward=np.array([0, 0, 0]), disturb=False,
+                      stare_center=None, mesh_path=None,
+                      output_dir=os.path.join(OUTPUT_BASE, 'dense_grid')):
+    poses = generate_poses_grid_box(origin, interval, grid_size, world_up,
+                                    foward, disturb, stare_center, mesh_path)
+    render_poses(poses, output_dir)
+
 
 def generate_training_data(x_range, y_range, x_interval, y_interval, view_count_x, view_count_y,
  depth, scene_name):
@@ -529,5 +541,14 @@ if __name__ == '__main__':
         render_mesh(world_up, stare_center,
                     os.path.join(args.extra_mesh), args.radius,
                     output_dir=os.path.join(OUTPUT_BASE, 'mesh', args.output_dir))
+    elif args.mode == 'dense_grid':
+        stare_center = np.array([0, 0, 0])
+        side_lengths = np.array([args.side_length_x, args.side_length_y, args.side_length_z])
+        origin = stare_center - side_lengths / 2.0
+        grid_size = (side_lengths / args.interval + 1).astype(np.int)
+        render_dense_grid(origin, args.interval, grid_size, world_up,
+                          stare_center=stare_center, mesh_path=args.extra_mesh,
+                          output_dir=os.path.join(OUTPUT_BASE, 'dense_grid',
+                                                  args.output_dir))
     else:
         print('Render mode not specified!')

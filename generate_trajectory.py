@@ -122,12 +122,20 @@ def generate_poses_log_file(origin, scale, log_path):
 
 
 def generate_poses_grid_box(origin, interval, grid_size,
-                            world_up, forward, disturb=True):
+                            world_up, forward=np.array([0, 0, 0]), disturb=True,
+                            stare_center=None, proxy_path=None):
     '''
         origin: (x_min, y_min, z_min)
         interval: (x_width, y_width, z_width) or interval
         grid_size: (x_count, y_count, z_count)
     '''
+    # Optional proxy for inside/outside check
+    proxy = None
+    if proxy_path is not None:
+        import trimesh
+        proxy = trimesh.load_mesh(proxy_path)
+        ray_caster = trimesh.ray.ray_triangle.RayMeshIntersector(proxy)
+    # Generate poses
     poses = []
     x_count, y_count, z_count = grid_size
     for i in range(x_count):
@@ -135,9 +143,21 @@ def generate_poses_grid_box(origin, interval, grid_size,
             for k in range(z_count):
                 position_vec = origin + np.array([i, j, k]) * interval
                 target_pos = position_vec + forward
+                if stare_center is not None:
+                    target_pos = stare_center
                 if disturb:
                     random_disturb = np.random.rand(3)
                     target_pos += 0.1 * random_disturb / np.linalg.norm(random_disturb)
+                if proxy is not None:
+                    direction = target_pos - position_vec
+                    if np.linalg.norm(direction) == 0:
+                        direction = np.random.uniform(size=3)
+                    tri_idx = ray_caster.intersects_first(position_vec[None, :],
+                                                          direction[None, :])
+                    normal = proxy.face_normals[tri_idx[0]]
+                    if normal @ direction > 0: # Same direction, view lies inside geometry
+                        continue
+                        
                 pose = look_at(position_vec, world_up, target_pos, world_up)
                 poses.append(pose)
     return poses

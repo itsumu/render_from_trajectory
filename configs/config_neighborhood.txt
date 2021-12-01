@@ -1,0 +1,7 @@
+scene_name = neighborhood
+base_height = 3000
+side_length_x = 18000
+side_length_y = 20000
+side_length_z = 20000
+interval = 2000
+mode = grid_box
