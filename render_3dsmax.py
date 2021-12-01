@@ -27,7 +27,8 @@ def parse_args(config_file_path):
     parser.add_argument('--side_length_x', type=float, help='Grid box: Side length')
     parser.add_argument('--side_length_y', type=float, help='Grid box: Side length')
     parser.add_argument('--side_length_z', type=float, help='Grid box: Side length')
-    parser.add_argument('--interval', type=float, help='Grid box: interval')
+    parser.add_argument('--interval', type=float, help='Grid box: Interval')
+    parser.add_argument('--extra_mesh', type=str, help='Grid box: Extra mesh for visibility check')
     return parser.parse_args()
 
 
@@ -93,8 +94,11 @@ def render_images(scene_name, mode, do_render, do_save_pose,
     elif mode == 'log_file':
         poses = generate_poses_log_file(origin, 1.0, os.path.join(ROOT_DIR, 'data/trajectories/nest/traj_zhang.log'))
     elif mode == 'grid_box':
+        # poses = generate_poses_grid_box(grid_origin, interval, grid_size, world_up,
+                                        # forward, disturb=True)
         poses = generate_poses_grid_box(grid_origin, interval, grid_size, world_up,
-                                        forward, disturb=True)
+                                        disturb=False, stare_center=origin,
+                                        proxy_path=args.extra_mesh)
     else:
         print('Render mode not exist!')
         exit(1)
@@ -123,7 +127,7 @@ def render_images(scene_name, mode, do_render, do_save_pose,
             
 
 if __name__ == '__main__':   
-    args = parse_args(os.path.join(CONFIG_DIR, 'config_square.txt'))
+    args = parse_args(os.path.join(CONFIG_DIR, 'config_Olympics.txt'))
     scene_name = args.scene_name
     mode = args.mode
     do_render = False
