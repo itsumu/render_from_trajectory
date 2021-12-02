@@ -174,13 +174,13 @@ def generate_poses_grid_box(origin, interval, grid_size,
                 target_pos = position_vec + forward
                 if stare_center is not None:
                     target_pos = stare_center
+                    if np.linalg.norm(position_vec - target_pos) == 0:
+                        target_pos = position_vec + np.random.uniform(size=3)
                 if disturb:
                     random_disturb = np.random.rand(3)
                     target_pos += 0.1 * random_disturb / np.linalg.norm(random_disturb)
                 if proxy is not None:
                     direction = target_pos - position_vec
-                    if np.linalg.norm(direction) == 0:
-                        direction = np.random.uniform(size=3)
                     if ray_caster.intersects_any(position_vec[None, :],
                                                  direction[None, :]):   
                         tri_idx = ray_caster.intersects_first(position_vec[None, :],
