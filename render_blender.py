@@ -75,7 +75,7 @@ def render_poses(poses, output_dir):
         camera.matrix_world = Matrix(poses[i])
         output_filename = 'image_{:05d}.jpg'.format(i)
         scene.render.filepath = os.path.join(output_dir, output_filename)
-        # bpy.ops.render.render(write_still=True)
+        bpy.ops.render.render(write_still=True)
         np.savetxt(os.path.join(output_dir,
                                 'pose_{:05d}.txt'.format(i)),
                    camera.matrix_world)
