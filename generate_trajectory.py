@@ -1,3 +1,5 @@
+import math
+
 import numpy as np
 
 
@@ -17,6 +19,26 @@ def look_at(camera_pos, world_up, target_pos, camera_up): # Camera up not used f
     pose_mat = np.concatenate((pose_mat, np.array([[0, 0, 0, 1]])))
     return pose_mat
     
+def sample_positions_on_sphere(origin, radius, count_on_perimeter):
+    assert count_on_perimeter > 4
+    theta_range = math.pi
+    theta_interval = 2 * math.pi / count_on_perimeter
+    count_on_quadrant = math.floor(theta_range / theta_interval) + 1
+    
+    phi = 0
+    positions = []
+    for i in range(count_on_quadrant):
+        theta = i * theta_interval
+        longitude_count = max(math.floor(count_on_perimeter * math.sin(theta)), 1)
+        phi_interval = 2 * math.pi / longitude_count
+        for j in range(longitude_count):
+            phi += phi_interval
+            position = np.array([math.sin(theta) * math.cos(phi),
+                                 math.sin(theta) * math.sin(phi),
+                                 math.cos(theta)])
+            position = origin + radius * position
+            positions.append(position)
+    return positions
     
 def sample_positions_on_hemisphere(sample_count, origin, radius, mode='uniform'):
     samples = []
@@ -62,6 +84,13 @@ def sample_positions_on_hemisphere(sample_count, origin, radius, mode='uniform')
     for i in range(sample_count):
         samples[i] = samples[i] * radius + origin
     return samples
+
+
+def generate_poses_spherical(world_up, origin, radius, count_on_perimeter):
+    positions = sample_positions_on_sphere(origin, radius, count_on_perimeter)
+    poses = [look_at(position, world_up, origin, world_up) for position in positions]
+    
+    return poses
 
 
 def generate_poses_hemisphere(view_count, world_up, origin, radius):
@@ -152,11 +181,13 @@ def generate_poses_grid_box(origin, interval, grid_size,
                     direction = target_pos - position_vec
                     if np.linalg.norm(direction) == 0:
                         direction = np.random.uniform(size=3)
-                    tri_idx = ray_caster.intersects_first(position_vec[None, :],
-                                                          direction[None, :])
-                    normal = proxy.face_normals[tri_idx[0]]
-                    if normal @ direction > 0: # Same direction, view lies inside geometry
-                        continue
+                    if ray_caster.intersects_any(position_vec[None, :],
+                                                 direction[None, :]):   
+                        tri_idx = ray_caster.intersects_first(position_vec[None, :],
+                                                            direction[None, :])
+                        normal = proxy.face_normals[tri_idx[0]]
+                        if normal @ direction > 0: # Same direction, view lies inside geometry
+                            continue
                         
                 pose = look_at(position_vec, world_up, target_pos, world_up)
                 poses.append(pose)

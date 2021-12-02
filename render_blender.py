@@ -42,11 +42,12 @@ def parse_args(argv):
     parser.add_argument('--mode', type=str, default='sparse', help='Sampling mode', required=True)
     parser.add_argument('--rotate_axis', type=str, default='y')
     parser.add_argument('--position', type=float, action='append', help='Static position')
-    parser.add_argument('--side_length_x', type=float, default=0, help='Side length for dense grid')
-    parser.add_argument('--side_length_y', type=float, default=0, help='Side length for dense grid')
-    parser.add_argument('--side_length_z', type=float, default=0, help='Side length for dense grid')
+    parser.add_argument('--side_length_x', type=float, default=0, help='Dense grid: Side length')
+    parser.add_argument('--side_length_y', type=float, default=0, help='Dense grid: Side length')
+    parser.add_argument('--side_length_z', type=float, default=0, help='Dense grid: Side length')
     parser.add_argument('--interval', type=float, default=0, help='Interval for dense grid')
     parser.add_argument('--extra_mesh', type=str, default='./data/mesh/hemisphere/hemisphere.obj', help='Extra mesh as trajectory')
+    parser.add_argument('--count_on_perimeter', type=int, default=0, help='Spherical: View count on perimeter')
     return parser.parse_args(argv)
 
 
@@ -74,7 +75,7 @@ def render_poses(poses, output_dir):
         camera.matrix_world = Matrix(poses[i])
         output_filename = 'image_{:05d}.jpg'.format(i)
         scene.render.filepath = os.path.join(output_dir, output_filename)
-        bpy.ops.render.render(write_still=True)
+        # bpy.ops.render.render(write_still=True)
         np.savetxt(os.path.join(output_dir,
                                 'pose_{:05d}.txt'.format(i)),
                    camera.matrix_world)
@@ -194,35 +195,12 @@ def render_zoom_in(start_position, z_interval, view_count_z, frame_start_index=0
     return frame_index
 
 
-def render_spherical(radius, world_up_axis, stare_center, view_count, 
+def render_spherical(radius, world_up, stare_center, count_on_perimeter, 
                      frame_start_index=0, 
                      output_dir=os.path.join(OUTPUT_BASE, 'spherical')):
-    os.makedirs(output_dir, exist_ok=True)
-    frame_index = frame_start_index
-
-    vertical_step = radians(180.0 / view_count)
-    horizontal_step = radians(360.0 / (view_count / 2.0))
-    phi = 0.0
-    theta = 0.0
-    # Render
-    for i in range(view_count):
-        x = radius * np.cos(theta)
-        y = radius * np.sin(theta)
-        z = radius * np.cos(phi)
-        camera.matrix_world = Matrix.Translation((x, y, z))
-        look_at(camera, Vector(stare_center), world_up_axis)
-        output_filename = 'image_{:05d}.jpg'.format(frame_index)
-        scene.render.filepath = os.path.join(output_dir, output_filename)
-        bpy.ops.render.render(write_still=True)
-        np.savetxt(os.path.join(output_dir,
-                                'pose_{:05d}.txt'.format(frame_index)),
-                   camera.matrix_world)
-
-        phi += vertical_step
-        theta += horizontal_step
-        frame_index += 1
-        
-    return frame_index
+    poses = generate_poses_spherical(world_up, stare_center, radius,
+                                     count_on_perimeter)
+    render_poses(poses, output_dir)
 
 
 def render_hemisphere(radius, world_up, stare_center, view_count, 
@@ -517,8 +495,8 @@ if __name__ == '__main__':
             output_dir=os.path.join(OUTPUT_BASE, 'grid_center', args.output_dir))
     elif args.mode == 'spherical':
         stare_center = np.array([0, 0, 0])
-        render_spherical(args.radius, args.world_up_axis, stare_center, 
-                         args.view_count_all, 
+        render_spherical(args.radius, world_up, stare_center, 
+                         args.count_on_perimeter, 
                          frame_start_index=0, 
                          output_dir=os.path.join(OUTPUT_BASE, 'spherical',
                                                  args.output_dir))
