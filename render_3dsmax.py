@@ -113,13 +113,13 @@ def render_images(scene_name, mode, do_render, do_save_pose,
         pos_offset = -stare_center
     else:
         pos_offset = -origin
-    
-    if do_render:
-        render_poses(main_camera, poses, os.path.join(OUTPUT_BASE, mode, scene_name))
         
     if do_save_pose:
         save_poses(poses, os.path.join(OUTPUT_BASE, mode, scene_name),
                    True, scale_position, pos_offset, scale_factor)
+    
+    if do_render:
+        render_poses(main_camera, poses, os.path.join(OUTPUT_BASE, mode, scene_name))
         
     main_camera.pos = camera_default_pos
     if hasattr(main_camera, 'rotation'):
