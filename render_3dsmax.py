@@ -51,7 +51,7 @@ def save_poses(poses, output_dir, centrialize=False, scale=False,
                 pos_offset=np.array([0, 0, 0]), scale_factor=1.0):
     os.makedirs(output_dir, exist_ok=True)
     for i in range(len(poses)):
-        pose = poses[i]
+        pose = np.copy(poses[i])
         if centrialize:
             pose[:3, -1] = pose[:3, -1] + pos_offset
         if scale:
