@@ -188,7 +188,8 @@ def generate_poses_grid_box(origin, interval, grid_size,
                         normal = proxy.face_normals[tri_idx[0]]
                         if normal @ direction > 0: # Same direction, view lies inside geometry
                             continue
-                        
+                    else: # Not intersected with any geometry
+                        continue
                 pose = look_at(position_vec, world_up, target_pos, world_up)
                 poses.append(pose)
     return poses

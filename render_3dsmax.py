@@ -94,11 +94,11 @@ def render_images(scene_name, mode, do_render, do_save_pose,
     elif mode == 'log_file':
         poses = generate_poses_log_file(origin, 1.0, os.path.join(ROOT_DIR, 'data/trajectories/nest/traj_zhang.log'))
     elif mode == 'grid_box':
-        # poses = generate_poses_grid_box(grid_origin, interval, grid_size, world_up,
-                                        # forward, disturb=True)
         poses = generate_poses_grid_box(grid_origin, interval, grid_size, world_up,
-                                        disturb=False, stare_center=origin,
-                                        proxy_path=args.extra_mesh)
+                                        forward, disturb=True, proxy_path=args.extra_mesh)
+        # poses = generate_poses_grid_box(grid_origin, interval, grid_size, world_up,
+                                        # disturb=False, stare_center=origin,
+                                        # proxy_path=args.extra_mesh)
     else:
         print('Render mode not exist!')
         exit(1)
