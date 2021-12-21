@@ -29,6 +29,7 @@ def parse_args(config_file_path):
     parser.add_argument('--side_length_z', type=float, help='Grid box: Side length')
     parser.add_argument('--interval', type=float, help='Grid box: Interval')
     parser.add_argument('--extra_mesh', type=str, help='Grid box: Extra mesh for visibility check')
+    parser.add_argument('--log_file', type=str, help='Log file: Log file path')
     return parser.parse_args()
 
 
@@ -92,7 +93,7 @@ def render_images(scene_name, mode, do_render, do_save_pose,
         poses = generate_poses_mesh(world_up, stare_center, os.path.join(ROOT_DIR, 'data/mesh/hemisphere/hemisphere.obj'), radius,
                                     True)
     elif mode == 'log_file':
-        poses = generate_poses_log_file(origin, 1.0, os.path.join(ROOT_DIR, 'data/trajectories/nest/traj_zhang.log'))
+        poses = generate_poses_log_file(origin, 1.0, os.path.join(ROOT_DIR, args.log_file))
     elif mode == 'grid_box':
         poses = generate_poses_grid_box(grid_origin, interval, grid_size, world_up,
                                         forward, disturb=True, proxy_path=args.extra_mesh)
@@ -127,7 +128,7 @@ def render_images(scene_name, mode, do_render, do_save_pose,
             
 
 if __name__ == '__main__':   
-    args = parse_args(os.path.join(CONFIG_DIR, 'config_Olympics.txt'))
+    args = parse_args(os.path.join(CONFIG_DIR, 'config_neighborhood.txt'))
     scene_name = args.scene_name
     mode = args.mode
     do_render = False
