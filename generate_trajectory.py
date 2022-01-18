@@ -193,3 +193,15 @@ def generate_poses_grid_box(origin, interval, grid_size,
                 pose = look_at(position_vec, world_up, target_pos, world_up)
                 poses.append(pose)
     return poses
+
+
+def generate_poses_manual(camera_name, start_frame, end_frame, step):
+    poses = []
+    camera = rt.getNodeByName(camera_name)
+    with pymxs.animate(True):
+        for i in range(start_frame, end_frame, step):
+            with pymxs.attime(i):
+                pos = np.asarray(camera.pos)
+                dir = -np.asarray(camera.dir)
+                poses.append(look_at(pos, np.asarray([0,0,1]), pos + dir, [0]))
+    return poses

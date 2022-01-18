@@ -85,6 +85,12 @@ def render_images(scene_name, mode, do_render, do_save_pose,
     default_forward = np.array([0, 1, 0])
     forward = Rotation.from_euler('x', -45, degrees=True).apply(default_forward)
     
+    # Manual configs
+    camera_name = 'banyuan'
+    start_frame = 0
+    end_frame = 1000
+    step = 2
+    
     # Raw poses generation
     poses = []
     if mode == 'hemisphere':
@@ -100,6 +106,9 @@ def render_images(scene_name, mode, do_render, do_save_pose,
         # poses = generate_poses_grid_box(grid_origin, interval, grid_size, world_up,
                                         # disturb=False, stare_center=origin,
                                         # proxy_path=args.extra_mesh)
+    elif mode == 'maunal':
+        poses = generate_poses_manual(camera_name, start_frame, end_frame, step)
+    
     else:
         print('Render mode not exist!')
         exit(1)
