@@ -33,6 +33,18 @@ def parse_args(config_file_path):
     return parser.parse_args()
 
 
+def generate_poses_manual(camera_name, start_frame, end_frame, step):
+    poses = []
+    camera = rt.getNodeByName(camera_name)
+    with pymxs.animate(True):
+        for i in range(start_frame, end_frame, step):
+            with pymxs.attime(i):
+                pos = np.asarray(camera.pos)
+                dir = -np.asarray(camera.dir)
+                poses.append(look_at(pos, np.asarray([0, 0, 1]), pos + dir, [0]))
+    return poses
+
+
 def render_poses(camera, poses, output_dir):
     os.makedirs(output_dir, exist_ok=True)
     for i in range(len(poses)):
@@ -86,10 +98,10 @@ def render_images(scene_name, mode, do_render, do_save_pose,
     forward = Rotation.from_euler('x', -45, degrees=True).apply(default_forward)
     
     # Manual configs
-    camera_name = 'banyuan'
+    camera_name = 'CameraLine'
     start_frame = 0
-    end_frame = 1000
-    step = 2
+    end_frame = 300
+    step = 1
     
     # Raw poses generation
     poses = []
@@ -106,9 +118,8 @@ def render_images(scene_name, mode, do_render, do_save_pose,
         # poses = generate_poses_grid_box(grid_origin, interval, grid_size, world_up,
                                         # disturb=False, stare_center=origin,
                                         # proxy_path=args.extra_mesh)
-    elif mode == 'maunal':
+    elif mode == 'manual':
         poses = generate_poses_manual(camera_name, start_frame, end_frame, step)
-    
     else:
         print('Render mode not exist!')
         exit(1)
@@ -137,7 +148,7 @@ def render_images(scene_name, mode, do_render, do_save_pose,
             
 
 if __name__ == '__main__':   
-    args = parse_args(os.path.join(CONFIG_DIR, 'config_neighborhood.txt'))
+    args = parse_args(os.path.join(CONFIG_DIR, 'config_Olympics.txt'))
     scene_name = args.scene_name
     mode = args.mode
     do_render = False
